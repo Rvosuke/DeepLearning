@@ -5,7 +5,7 @@
       <entry url="file://$PROJECT_DIR$">
         <entryData>
           <resourceRoots>
-            <path value="file://$PROJECT_DIR$/d2l-zh" />
+            <path value="file://$PROJECT_DIR$/data" />
           </resourceRoots>
         </entryData>
       </entry>
