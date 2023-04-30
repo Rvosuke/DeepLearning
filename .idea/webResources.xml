@@ -6,6 +6,10 @@
         <entryData>
           <resourceRoots>
             <path value="file://$PROJECT_DIR$/data" />
+            <path value="file://$PROJECT_DIR$/USPS/USPS" />
+            <path value="file://$PROJECT_DIR$/MNIST/MNIST_Data" />
+            <path value="file://$PROJECT_DIR$/BreastCancer/image" />
+            <path value="file://$PROJECT_DIR$/BreastCancer/mask" />
           </resourceRoots>
         </entryData>
       </entry>
