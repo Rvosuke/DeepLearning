@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 /BreastCancer/image/
 /BreastCancer/mask/
+*.iml
+*.xml
+*.xml
