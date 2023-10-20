@@ -131,6 +131,5 @@ dmypy.json
 /BreastCancer/mask/
 *.iml
 *.xml
-*.xml
 /.idea/
-/.idea/
+*.csv
