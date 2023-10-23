@@ -1,0 +1,30 @@
+Province Code: 1, Sample Count: 1271
+Province Code: 3, Sample Count: 582
+Province Code: 4, Sample Count: 171
+Province Code: 5, Sample Count: 1860
+Province Code: 6, Sample Count: 889
+Province Code: 7, Sample Count: 1078
+Province Code: 8, Sample Count: 122
+Province Code: 9, Sample Count: 63
+Province Code: 10, Sample Count: 943
+Province Code: 11, Sample Count: 1012
+Province Code: 12, Sample Count: 314
+Province Code: 13, Sample Count: 563
+Province Code: 14, Sample Count: 382
+Province Code: 15, Sample Count: 1135
+Province Code: 16, Sample Count: 635
+Province Code: 17, Sample Count: 624
+Province Code: 18, Sample Count: 83
+Province Code: 19, Sample Count: 136
+Province Code: 20, Sample Count: 909
+Province Code: 21, Sample Count: 495
+Province Code: 24, Sample Count: 623
+Province Code: 26, Sample Count: 1073
+Province Code: 27, Sample Count: 623
+Province Code: 28, Sample Count: 750
+Province Code: 29, Sample Count: 1806
+Province Code: 32, Sample Count: 1571
+Province Code: 33, Sample Count: 969
+Province Code: 34, Sample Count: 217
+Total Sample Count: 20899
+
