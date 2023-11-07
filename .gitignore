@@ -133,3 +133,5 @@ dmypy.json
 *.xml
 /.idea/
 *.csv
+/MNIST/MNIST_Data/
+/.idea/

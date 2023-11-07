@@ -1,9 +1,0 @@
-{
-    "data_dir": "MNIST_Data",
-    "activation": "relu",
-    "loss_type": "ce",
-    "num_epochs": 20,
-    "lr": 0.0015,
-    "momentum": 0.9,
-    "dropout_rate": 0.1
-}
