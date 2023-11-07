@@ -1,33 +1,4 @@
-from sklearn.datasets import load_iris
 import numpy as np
-
-# 加载Iris数据集
-iris = load_iris()
-X, y = iris.data, iris.target
-
-# 随机打乱数据和标签
-np.random.seed(521)  # 为了可重复性
-indices = np.arange(X.shape[0])
-np.random.shuffle(indices)
-X = X[indices]
-y = y[indices]
-
-# 划分训练集和测试集（例如，80%训练，20%测试）
-test_size_ratio = 0.2
-test_size = int(X.shape[0] * test_size_ratio)
-X_train = X[:-test_size]
-X_test = X[-test_size:]
-y_train = y[:-test_size]
-y_test = y[-test_size:]
-
-# 手动实现归一化（特征缩放）
-# 计算训练数据的均值和标准差
-mean = np.mean(X_train, axis=0)
-std = np.std(X_train, axis=0)
-
-# 对训练数据和测试数据应用归一化
-X_train_scaled = (X_train - mean) / std
-X_test_scaled = (X_test - mean) / std
 
 
 def softmax(x):
@@ -132,22 +103,27 @@ def train(model, X_train, y_train, X_val, y_val, epochs, batch_size, learning_ra
             f'Epoch {epoch + 1}, Loss: {loss:.4f}, Validation Loss: {val_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}')
 
 
-# 训练模型
-input_size = X_train_scaled.shape[1]
-hidden_size1 = 10
-hidden_size2 = 10
-output_size = len(np.unique(y_train))  # 根据类别数量来设置
-model = MLP(input_size, hidden_size1, hidden_size2, output_size)
+if __name__ == '__main__':
+    from iris_data import iris_data_load
 
-# 转换标签为one-hot编码
-y_train_one_hot = np.eye(output_size)[y_train]
-y_test_one_hot = np.eye(output_size)[y_test]
+    # 加载数据
+    X_train_scaled, X_test_scaled, y_train, y_test = iris_data_load()
+    # 训练模型
+    input_size = X_train_scaled.shape[1]
+    hidden_size1 = 10
+    hidden_size2 = 10
+    output_size = len(np.unique(y_train))  # 根据类别数量来设置
+    model = MLP(input_size, hidden_size1, hidden_size2, output_size)
 
-train(model, X_train_scaled, y_train, X_test_scaled, y_test, epochs=100, batch_size=1, learning_rate=1e-2)
+    # 转换标签为one-hot编码
+    y_train_one_hot = np.eye(output_size)[y_train]
+    y_test_one_hot = np.eye(output_size)[y_test]
 
-# 最后，使用测试集评估模型性能
-test_output = model.forward(X_test_scaled)
-test_loss = cross_entropy_loss(test_output, y_test)
-test_predictions = np.argmax(test_output, axis=1)
-test_accuracy = np.mean(test_predictions == y_test)
-print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
+    train(model, X_train_scaled, y_train, X_test_scaled, y_test, epochs=1000, batch_size=4, learning_rate=1e-3)
+
+    # 最后，使用测试集评估模型性能
+    test_output = model.forward(X_test_scaled)
+    test_loss = cross_entropy_loss(test_output, y_test)
+    test_predictions = np.argmax(test_output, axis=1)
+    test_accuracy = np.mean(test_predictions == y_test)
+    print(f'Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
