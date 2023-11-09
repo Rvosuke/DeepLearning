@@ -60,8 +60,9 @@ def train(data_dir, lr=0.01, num_epochs=20):
     train_losses = []
     val_accuracies = []
 
-    for epoch in range(num_epochs):
+    for epoch in range(1, 1+num_epochs):
         running_loss = 0.0
+
         for i, data in enumerate(ds_train, 0):
             inputs, labels = data
             inputs, labels = inputs.to(device), labels.to(device)  # 将输入和标签移动到所选设备

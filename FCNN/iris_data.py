@@ -31,4 +31,4 @@ def iris_data_load():
     X_train_scaled = (X_train - mean) / std
     X_test_scaled = (X_test - mean) / std
 
-    return X_train_scaled, X_test_scaled, y_train, y_test
+    return np.float32(X_train_scaled), np.float32(X_test_scaled), y_train, y_test

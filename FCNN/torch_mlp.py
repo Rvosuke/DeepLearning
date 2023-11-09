@@ -19,14 +19,15 @@ class FCN(nn.Module):
         return out
 
 
-def train(epoches, model, optimizer, loss_fn, x, y):
+def train(epoches, model, optimizer, loss_fn, data_loader):
     model.train()
     for epoch in range(1, 1 + epoches):
-        optimizer.zero_grad()
-        output = model(x)
-        loss = loss_fn(output, y)
-        loss.backward()
-        optimizer.step()
+        for index, data in enumerate(data_loader):
+            optimizer.zero_grad()
+            output = model(data[0])
+            loss = loss_fn(output, data[1])
+            loss.backward()
+            optimizer.step()
         if epoch % 10 == 0:
             print('Epoch {}, Loss {}'.format(epoch, loss.item()))
 
@@ -41,17 +42,21 @@ def test(model, x, y):
 
 
 def main():
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     learning_rate = 1e-3
-    fcn = FCN()
+    fcn = FCN().to(device)
     opt = optim.Adam(fcn.parameters(), lr=learning_rate)
-    ce = nn.CrossEntropyLoss()
+    ce = nn.CrossEntropyLoss().to(device)
     x_train, x_test, y_train, y_test = iris_data_load()
-    x_train = torch.from_numpy(x_train).float()
-    x_test = torch.from_numpy(x_test).float()
-    y_train = torch.from_numpy(y_train).long()
-    y_test = torch.from_numpy(y_test).long()
+    x_train = torch.from_numpy(x_train).to(device)
+    x_test = torch.from_numpy(x_test).to(device)
+    y_train = torch.from_numpy(y_train).long().to(device)
+    y_test = torch.from_numpy(y_test).long().to(device)
+    train_data = torch.utils.data.TensorDataset(x_train, y_train)
+    train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=8, shuffle=True, num_workers=8)
+    # 设置为GPU模式
 
-    train(1000, fcn, opt, ce, x_train, y_train)
+    train(1000, fcn, opt, ce, train_loader)
     test(fcn, x_test, y_test)
 
 

@@ -10,6 +10,8 @@
             <path value="file://$PROJECT_DIR$/MNIST/MNIST_Data" />
             <path value="file://$PROJECT_DIR$/BreastCancer/image" />
             <path value="file://$PROJECT_DIR$/BreastCancer/mask" />
+            <path value="file://$PROJECT_DIR$/flowers/flower_photos" />
+            <path value="file://$PROJECT_DIR$/cat_dog/cat_dog_data" />
           </resourceRoots>
         </entryData>
       </entry>

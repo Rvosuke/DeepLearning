@@ -135,3 +135,5 @@ dmypy.json
 *.csv
 /MNIST/MNIST_Data/
 /.idea/
+/flowers/flower_photos/
+/cat_dog/cat_dog_data/
