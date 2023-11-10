@@ -26,6 +26,7 @@ def train(model, epochs, data_loader, optimizer, loss_fn, device):
         print(f"Epoch: {epoch}, Loss: {loss:.4f}, Time: {int(epoch_time)}s")
     end_time = time.time() - start_time
     print(f"Total Time: {int(end_time)}s")
+    return model
 
 
 def test(model, dataloader, device):
@@ -39,4 +40,6 @@ def test(model, dataloader, device):
             outputs = model(inputs)
             predicted = torch.argmax(outputs.data, 1)
             correct += (predicted == labels).long().sum()
-    print(f"Accuracy: {correct / len(dataloader.dataset):.2f}")
+    acc = correct / len(dataloader.dataset) * 100
+    print(f"Accuracy: {acc:.2f}")
+    return acc

@@ -137,3 +137,5 @@ dmypy.json
 /.idea/
 /flowers/flower_photos/
 /cat_dog/cat_dog_data/
+/cat_dog/cat_dog_model_97.pth
+/cat_dog/cat_dog_model_99.pth
