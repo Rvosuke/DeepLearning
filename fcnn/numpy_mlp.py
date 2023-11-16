@@ -6,6 +6,10 @@ def softmax(x):
     return e_x / np.sum(e_x, axis=1, keepdims=True)
 
 
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
 def cross_entropy_loss(predictions, labels):
     m = labels.shape[0]
     log_likelihood = -np.log(predictions[range(m), labels])
@@ -119,7 +123,7 @@ if __name__ == '__main__':
     y_train_one_hot = np.eye(output_size)[y_train]
     y_test_one_hot = np.eye(output_size)[y_test]
 
-    train(model, X_train_scaled, y_train, X_test_scaled, y_test, epochs=1000, batch_size=4, learning_rate=1e-3)
+    train(model, X_train_scaled, y_train, X_test_scaled, y_test, epochs=1000, batch_size=32, learning_rate=1e-2)
 
     # 最后，使用测试集评估模型性能
     test_output = model.forward(X_test_scaled)

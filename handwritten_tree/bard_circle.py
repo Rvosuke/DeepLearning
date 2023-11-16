@@ -78,7 +78,7 @@ def verify_circle_candidates(circle_candidates, edges):
 
 def main():
     # Load the image.
-    image = cv2.imread('image.jpg')
+    image = cv2.imread('')
 
     # Generate circle candidates.
     circle_candidates = generate_circle_candidates(image)

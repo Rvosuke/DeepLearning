@@ -87,7 +87,7 @@ from PIL import Image
 #     return edge_map
 
 if __name__ == '__main__':
-    img = Image.open('csu.jpg')
+    img = Image.open('../mobj/csu.jpg')
     # 缩放图片到 720*960
     img = img.resize((960, 720))
     gray = np.array(img.convert('L'))

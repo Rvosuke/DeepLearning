@@ -19,16 +19,20 @@ class FCN(nn.Module):
         return out
 
 
-def train(epoches, model, optimizer, loss_fn, data_loader):
+def train(epoches, model, optimizer, loss_fn, data_loader, device, accu_step=3):
     model.train()
+    # step_lr = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.9)
     for epoch in range(1, 1 + epoches):
-        for index, data in enumerate(data_loader):
-            optimizer.zero_grad()
-            output = model(data[0])
-            loss = loss_fn(output, data[1])
+        for index, (X, Y) in enumerate(data_loader):
+            X, Y = X.to(device), Y.to(device)
+            output = model(X)
+            loss = loss_fn(output, Y)
+
             loss.backward()
-            optimizer.step()
-        if epoch % 10 == 0:
+            # step_lr.step()
+            if epoch % accu_step == 0:
+                optimizer.step()
+                optimizer.zero_grad()
             print('Epoch {}, Loss {}'.format(epoch, loss.item()))
 
 
@@ -43,7 +47,7 @@ def test(model, x, y):
 
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    learning_rate = 1e-3
+    learning_rate = 2e-2
     fcn = FCN().to(device)
     opt = optim.Adam(fcn.parameters(), lr=learning_rate)
     ce = nn.CrossEntropyLoss().to(device)
@@ -53,12 +57,20 @@ def main():
     y_train = torch.from_numpy(y_train).long().to(device)
     y_test = torch.from_numpy(y_test).long().to(device)
     train_data = torch.utils.data.TensorDataset(x_train, y_train)
-    train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=8, shuffle=True, num_workers=8)
+    train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=128, shuffle=True)
     # 设置为GPU模式
 
-    train(1000, fcn, opt, ce, train_loader)
+    train(128, fcn, opt, ce, train_loader, device=device)
     test(fcn, x_test, y_test)
+    n_params = 0
+    for param in fcn.parameters():
+        n_params += torch.numel(param)
+    print('Number of Parameters: {}'.format(n_params))
 
 
 if __name__ == '__main__':
+    import time
+    start = time.time()
     main()
+    end = time.time()
+    print('Time: {:.2f}s'.format(end - start))

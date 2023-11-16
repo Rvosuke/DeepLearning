@@ -127,8 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-/BreastCancer/image/
-/BreastCancer/mask/
+/breast_cancer/image/
+/breast_cancer/mask/
 *.iml
 *.xml
 /.idea/
