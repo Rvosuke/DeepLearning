@@ -1,0 +1,6 @@
+{
+    "batch_size": 256,
+    "lr": 5e-05,
+    "num_epochs": 40,
+    "model": "ResNet16"
+}

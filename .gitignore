@@ -139,3 +139,5 @@ dmypy.json
 /cat_dog/cat_dog_data/
 /cat_dog/cat_dog_model_97.pth
 /cat_dog/cat_dog_model_99.pth
+/MNIST/EMNIST_Data/
+/handwritten_tree/circle/datasets/
