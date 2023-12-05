@@ -141,3 +141,4 @@ dmypy.json
 /cat_dog/cat_dog_model_99.pth
 /MNIST/EMNIST_Data/
 /handwritten_tree/circle/datasets/
+/gnn/dataset/
