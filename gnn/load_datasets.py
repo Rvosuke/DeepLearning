@@ -13,7 +13,7 @@ target.to_csv('target.csv')
 # Convert node feature to pandas DataFrame
 df = pd.DataFrame(data.data, columns=data.feature_names)
 df['target'] = data.target
-df.to_csv('features.csv')
+df.to_csv('expression.csv')
 
 # Create adjacency matrix
 sm = from_pandas(df)

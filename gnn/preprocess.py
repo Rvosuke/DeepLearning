@@ -1,61 +1,52 @@
 import torch
-import networkx as nx
+import torch_geometric
 import numpy as np
-import torch_geometric.utils
-from torch_geometric.data import Data, DataLoader
+import networkx as nx
+
+from torch_geometric.data import Data
 
 
-# Save the values into an adjacency matrix
-adj = np.loadtxt(open("adjacency_matrix.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(2, 53))
+adj = np.loadtxt(open("adjacency_matrix.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(1, 32))
+G = nx.from_numpy_array(adj, parallel_edges=False, create_using=None)
 
-# Set up graph from adjacency matrix and assign protein name labels
-G = nx.from_numpy_matrix(adj, parallel_edges=False, create_using=None)
+expression_matrix = np.loadtxt(open("expression.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(1, 32))
+binary_diagnosis = np.loadtxt(open("target.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(1, 2))
 
-num_sample = len(df)
+x_tensor = torch.from_numpy(expression_matrix).float()
+diagnosis_tensor = torch.Tensor(binary_diagnosis).long()
+# adj_tensor = torch.from_numpy(adj)
+G_convert = torch_geometric.utils.from_networkx(G)
 
-# Save the protein expression levels into a matrix
-expression_mat = numpy.loadtxt(open("log_transformed_ADNI_expression_data_with_covariates.csv", "rb"), delimiter=",", skiprows=1, usecols=numpy.arange(16, 67))
-# print(expression_mat[50,:])
 
-x_tensor = torch.from_numpy(np.array(df)).float()
-target_tensor = torch.Tensor(data.target).long()
-adj_tensor = torch.from_numpy(np.array(adj_matrix))
-sm_convert = torch_geometric.utils.from_networkx(sm)
+def split(expression, target, graph, encode_dim=3):
+    if isinstance(expression, np.ndarray):
+        expression = torch.from_numpy(expression).float()
+        target = torch.Tensor(target).long()
+    elif isinstance(expression, torch.Tensor):
+        pass
+    else:
+        raise TypeError(f'expression and target should be ndarray or tensor, get {expression.__class__} {target.__class__}')
+    train_list = []
+    test_list = []
+    valid_list = []
+    num_feature = len(expression[0])
+    num_sample = len(target)
+    train_index = int(num_sample*0.8)
+    val_index = int(num_sample*0.9)
+    positional_encoder = torch.rand(31, encode_dim).float()
+    for i in range(num_sample):
+        x_yeet = expression[i]
+        x_scalar = torch.unsqueeze(x_yeet, dim=1).float()
+        x = torch.cat((x_scalar, positional_encoder), 1)
+        y = target[i]
+        if i in torch.arange(0, train_index):
+            train_list.append(Data(x=x, y=y, edge_index=graph.edge_index, edge_attr=graph.weight))
+        elif i in torch.arange(train_index, val_index):
+            valid_list.append(Data(x=x, y=y, edge_index=graph.edge_index, edge_attr=graph.weight))
+        elif i in torch.arange(val_index, num_sample):
+            test_list.append(Data(x=x, y=y, edge_index=graph.edge_index, edge_attr=graph.weight))
 
-positional_encoder = torch.rand(30, 6).float()
+    return train_list, valid_list, test_list
 
-split_idx = {
-    'train': torch.tensor(np.arange(0, 400)),
-    'valid': torch.tensor(np.arange(400, 500)),
-    'test': torch.tensor(np.arange(500, 569)),
-}
 
-train_list = []
-test_list = []
-valid_list = []
-for i in range(len(target_tensor)):
-  x_yeet = x_tensor[i,:]
-  x_scalar = torch.t(torch.reshape(x_yeet, (1, len(x_yeet)))).float()
-  x = torch.cat((x_scalar, positional_encoder), 1)
-  y = target_tensor[i]
-  if i in split_idx['train']:
-    train_list.append(Data(x=x, y=y, edge_index=sm_convert.edge_index, edge_attr=sm_convert.weight))
-  elif i in split_idx['valid']:
-    valid_list.append(Data(x=x, y=y, edge_index=sm_convert.edge_index, edge_attr=sm_convert.weight))
-  elif i in split_idx['test']:
-    test_list.append(Data(x=x, y=y, edge_index=sm_convert.edge_index, edge_attr=sm_convert.weight))
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-train_loader = DataLoader(train_list, batch_size=16, shuffle=True)
-valid_loader = DataLoader(valid_list, batch_size=8, shuffle=False)
-test_loader = DataLoader(test_list, batch_size=8, shuffle=False)
-#%%
-args = {
-    'device': device,
-    'num_layers': 5,
-    'hidden_dim': 256,
-    'dropout': 0.3,
-    'lr': 1e-3,
-    'epochs': 50,
-}
+data_split = split(x_tensor, diagnosis_tensor, G_convert)
