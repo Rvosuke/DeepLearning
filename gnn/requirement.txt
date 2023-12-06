@@ -1,0 +1,14 @@
+# recommend using conda
+ogb
+nextworkx
+numpy
+pandas
+pygraphviz
+
+torch==2.1.0+cu121
+torch-geometric
+
+torch-scatter -f https://data.pyg.org/whl/torch-2.1.0+cu121.html
+torch-sparse -f https://data.pyg.org/whl/torch-2.1.0+cu121.html
+-q git+https://github.com/snap-stanford/deepsnap.git
+
