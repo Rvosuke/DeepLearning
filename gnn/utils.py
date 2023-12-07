@@ -1,54 +1,47 @@
 import torch
 import copy
 import pandas as pd
+from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, precision_score, confusion_matrix
 
 
 def train(model, device, data_loader, optimizer, loss_fn):
     model.train()
     loss = 0
 
-    for x, y in data_loader:
-        x, y = x.to(device), y.to(device)
+    for batch in data_loader:
+        batch = batch.to(device)
         optimizer.zero_grad()
-        out = model(x)
+        out = model(batch)
         # ignore NaN targets (unlabeled) when computing training loss.
-        is_labeled = y == y
-        loss = loss_fn(out[is_labeled], y[is_labeled])
+        is_labeled = batch.y == batch.y
+        loss = loss_fn(out[is_labeled], batch.y[is_labeled])
         loss.backward()
         optimizer.step()
 
     return loss.item()
 
 
-def eval(model, device, loader, evaluator, save_model_results=False):
+def eval(model, device, loader):
     model.eval()
     y_true = []
     y_pred = []
 
-    for batch in loader:
-        batch = batch.to(device)
-        with torch.no_grad():
-            pred = model(batch)
+    with torch.no_grad():
+        for data in loader:
+            data = data.to(device)
+            output = model(data)
 
-        y_true.append(batch.y.view(pred.shape).detach().cpu())
-        y_pred.append(pred.detach().cpu())
+            predicted_labels = (output > 0.5).float()
 
-    y_true = torch.cat(y_true, dim=0).numpy()
-    y_pred = torch.cat(y_pred, dim=0).numpy()
+            y_true.extend(data.y.cpu().numpy())
+            y_pred.extend(predicted_labels.cpu().numpy())
 
-    input_dict = {"y_true": y_true, "y_pred": y_pred}
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred)
+    tn, fp, fn, tp = np.ravel(np.array(confusion_matrix(y_true, y_pred)))
+    fpr, tpr, _ = roc_curve(y_true, y_pred)
+    auc = roc_auc_score(y_true, y_pred)
+    sensitivity = tp / (tp + fn)
+    specificity = tn / (tn + fp)
 
-    if save_model_results:
-        print("Saving Model Predictions")
-
-        # Create a pandas dataframe with a two columns
-        # y_pred | y_true
-        data = {}
-        data['y_pred'] = y_pred.reshape(-1)
-        data['y_true'] = y_true.reshape(-1)
-
-        df = pd.DataFrame(data=data)
-        df.to_csv('graph_evaluate.csv')
-
-    return evaluator.eval(input_dict)
-
+    return accuracy, precision, sensitivity, specificity, fpr, tpr, auc
