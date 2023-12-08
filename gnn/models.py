@@ -4,11 +4,9 @@ import torch_geometric
 
 class GCNBase(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, dropout, return_embeds=False):
-        # Initialisation of self.convs, self.bns, and self.softmax.
         super(GCNBase, self).__init__()
-        self.softmax = None  # The log softmax layer
-        self.convs = torch.nn.ModuleList()  # Construct all convs
-        self.bns = torch.nn.ModuleList()  # construct all bns A list of 1D batch normalization layers
+        self.convs = torch.nn.ModuleList()
+        self.bns = torch.nn.ModuleList()
 
         for layer in range(num_layers - 1):
             if layer == 0:  # For the first layer, we go from dimensions input -> hidden
@@ -55,15 +53,24 @@ class GCNGraph(torch.nn.Module):
         self.gnn_node1.reset_parameters()
         self.linear.reset_parameters()
 
-    def forward(self, x):
-        num_graphs = int(len(x.batch) / 31)
-        x = self.gnn_node1(x.x, x.edge_index, x.edge_attr)
-        x = self.asap(x)
-        x = self.gnn_node2(x.x, x.edge_index, x.edge_attr)
-        x = self.asap(x)
-        x = self.gnn_node2(x.x, x.edge_index, x.edge_attr)
+    def forward(self, data):
+        num_graphs = int(len(data.batch) / 31)
 
-        x = torch_geometric.nn.global_mean_pool(x, x.batch, num_graphs)
-        x = self.linear(x)
+        post_gcn1 = self.gnn_node1(data.x, data.edge_index, data.edge_attr)
+        post_pool1 = self.asap(post_gcn1, data.edge_index)
+        readout1 = torch_geometric.nn.global_mean_pool(post_pool1[0], post_pool1[3], num_graphs)
 
-        return x
+        post_gcn2 = self.gnn_node2(post_pool1[0], post_pool1[1], post_pool1[2])
+        post_pool2 = self.asap(post_gcn2, post_pool1[1])
+        readout2 = torch_geometric.nn.global_mean_pool(post_pool2[0], post_pool2[3], num_graphs)
+
+        post_gcn3 = self.gnn_node2(post_pool2[0], post_pool2[1], post_pool2[2])
+        post_pool3 = self.asap(post_gcn3, post_pool2[1])
+        readout3 = torch_geometric.nn.global_mean_pool(post_pool3[0], post_pool3[3], num_graphs)
+
+
+        # +5layers
+        out = readout1 + readout2 + readout3
+        out = self.linear(out)
+
+        return out

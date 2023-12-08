@@ -142,3 +142,4 @@ dmypy.json
 /MNIST/EMNIST_Data/
 /handwritten_tree/circle/datasets/
 /gnn/dataset/
+*.html
