@@ -42,11 +42,12 @@ class GCNBase(torch.nn.Module):
 
 
 class GCNGraph(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers, dropout):
+    def __init__(self, input_dim, hidden_dim, output_dim, gcn_layers=5, gcn_base_layers=3, dropout=0.3):
         super(GCNGraph, self).__init__()
-        self.gnn_node1 = GCNBase(input_dim, hidden_dim, hidden_dim, num_layers, dropout, return_embeds=True)
-        self.gnn_node2 = GCNBase(hidden_dim, hidden_dim, hidden_dim, num_layers, dropout, return_embeds=True)
-        self.asap = torch_geometric.nn.pool.ASAPooling(256, 0.5, dropout=0.1, negative_slope=0.2, add_self_loops=False)
+        self.gcn_base_layers = gcn_base_layers
+        self.gnn_node1 = GCNBase(input_dim, hidden_dim, hidden_dim, gcn_layers, dropout, return_embeds=True)
+        self.gnn_node2 = GCNBase(hidden_dim, hidden_dim, hidden_dim, gcn_layers, dropout, return_embeds=True)
+        self.asap = torch_geometric.nn.pool.ASAPooling(256, 0.5, dropout=dropout, negative_slope=0.2, add_self_loops=False)
         self.linear = torch.nn.Linear(hidden_dim, output_dim)
 
     def reset_parameters(self):
@@ -54,23 +55,17 @@ class GCNGraph(torch.nn.Module):
         self.linear.reset_parameters()
 
     def forward(self, data):
-        num_graphs = int(len(data.batch) / 31)
+        # num_nodes_per_graph = data.batch.bincount()
+        readouts = []
+        post_pool = (data.x, data.edge_index, data.edge_attr, None)
 
-        post_gcn1 = self.gnn_node1(data.x, data.edge_index, data.edge_attr)
-        post_pool1 = self.asap(post_gcn1, data.edge_index)
-        readout1 = torch_geometric.nn.global_mean_pool(post_pool1[0], post_pool1[3], num_graphs)
+        for i in range(self.gcn_base_layers):
+            if i == 0:
+                post_gcn = self.gnn_node1(post_pool[0], post_pool[1], post_pool[2])
+            else:
+                post_gcn = self.gnn_node2(post_pool[0], post_pool[1], post_pool[2])
+            post_pool = self.asap(post_gcn, post_pool[1])
+            readout = torch_geometric.nn.global_mean_pool(post_pool[0], post_pool[3], data.num_graphs)
+            readouts.append(readout)
 
-        post_gcn2 = self.gnn_node2(post_pool1[0], post_pool1[1], post_pool1[2])
-        post_pool2 = self.asap(post_gcn2, post_pool1[1])
-        readout2 = torch_geometric.nn.global_mean_pool(post_pool2[0], post_pool2[3], num_graphs)
-
-        post_gcn3 = self.gnn_node2(post_pool2[0], post_pool2[1], post_pool2[2])
-        post_pool3 = self.asap(post_gcn3, post_pool2[1])
-        readout3 = torch_geometric.nn.global_mean_pool(post_pool3[0], post_pool3[3], num_graphs)
-
-
-        # +5layers
-        out = readout1 + readout2 + readout3
-        out = self.linear(out)
-
-        return out
+        return self.linear(sum(readouts))

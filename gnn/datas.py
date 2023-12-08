@@ -1,56 +1,59 @@
 import torch
 import torch_geometric
 import numpy as np
+import pandas as pd
 import networkx as nx
 
-from torch_geometric.data import Data
 
+def read_data(file_path, is_adjacency=False):
+    # determine the number of columns
+    df = pd.read_csv(file_path)
+    num_cols = len(df.columns) - 1  # 减去第一列（通常是索引或标签）
 
-adj = np.loadtxt(open("adjacency_matrix.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(1, 32))
-G = nx.from_numpy_array(adj, parallel_edges=False, create_using=None)
-expression_matrix = np.loadtxt(open("expression.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(1, 32))
-binary_diagnosis = np.loadtxt(open("target.csv", "rb"), delimiter=",", skiprows=1, usecols=np.arange(1, 2))
-
-# prevent target feature from leaking information and construct virtual nodes
-in_edge = adj[30].astype(bool)
-for sample in expression_matrix:
-    sample[30] = np.mean(sample[in_edge])
-
-x_tensor = torch.from_numpy(expression_matrix).float()
-diagnosis_tensor = torch.Tensor(binary_diagnosis).long()
-# adj_tensor = torch.from_numpy(adj)
-G_convert = torch_geometric.utils.from_networkx(G)
+    # read data
+    data = np.loadtxt(file_path, delimiter=",", skiprows=1, usecols=np.arange(1, num_cols + 1))
+    
+    # if the data is an adjacency matrix, convert it to a networkx object
+    if is_adjacency:
+        return nx.from_numpy_array(data, parallel_edges=False, create_using=None)
+    return data
 
 
 def split(expression, target, graph, encode_dim=3):
-    if isinstance(expression, np.ndarray):
-        expression = torch.from_numpy(expression).float()
-        target = torch.Tensor(target).long()
-    elif isinstance(expression, torch.Tensor):
-        pass
-    else:
-        raise TypeError(f'expression and target should be ndarray or tensor, {expression.__class__}{target.__class__}')
-    train_list = []
-    test_list = []
-    valid_list = []
-    # num_feature = len(expression[0])
+    train_list, test_list, valid_list = [], [], []
     num_sample = len(target)
-    train_index = int(num_sample*0.8)
-    val_index = int(num_sample*0.9)
+    train_index, val_index = int(num_sample*0.8), int(num_sample*0.9)
     positional_encoder = torch.rand(31, encode_dim).float()
+
     for i in range(num_sample):
         x_yeet = expression[i]
         x_scalar = torch.unsqueeze(x_yeet, dim=1).float()
         x = torch.cat((x_scalar, positional_encoder), 1)
         y = target[i]
+
+        params = {"x": x, "y": y, "edge_index": graph.edge_index, "edge_attr": graph.weight}
+        data = torch_geometric.data.Data(**params)
         if i in torch.arange(0, train_index):
-            train_list.append(Data(x=x, y=y, edge_index=graph.edge_index, edge_attr=graph.weight))
+            train_list.append(data)
         elif i in torch.arange(train_index, val_index):
-            valid_list.append(Data(x=x, y=y, edge_index=graph.edge_index, edge_attr=graph.weight))
+            valid_list.append(data)
         elif i in torch.arange(val_index, num_sample):
-            test_list.append(Data(x=x, y=y, edge_index=graph.edge_index, edge_attr=graph.weight))
+            test_list.append(data)
 
     return train_list, valid_list, test_list
 
+
+adj_matrix = read_data("adjacency_matrix.csv", is_adjacency=True)
+expression_matrix = read_data("expression.csv")
+binary_diagnosis = read_data("target.csv")
+
+# prevent target feature from leaking information and construct virtual nodes
+in_edge = adj_matrix[-1].astype(bool)  # the last row of the adjacency matrix is the virtual node
+for sample in expression_matrix:
+    sample[-1] = np.mean(sample[in_edge])
+
+x_tensor = torch.from_numpy(expression_matrix).float()
+diagnosis_tensor = torch.Tensor(binary_diagnosis).long()
+G_convert = torch_geometric.utils.from_networkx(G)
 
 data_split = split(x_tensor, diagnosis_tensor, G_convert)
