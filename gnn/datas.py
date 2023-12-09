@@ -8,7 +8,7 @@ import networkx as nx
 def read_data(file_path, is_adjacency=False):
     # determine the number of columns
     df = pd.read_csv(file_path)
-    num_cols = len(df.columns) - 1  # 减去第一列（通常是索引或标签）
+    num_cols = len(df.columns) - 1
 
     # read data
     data = np.loadtxt(file_path, delimiter=",", skiprows=1, usecols=np.arange(1, num_cols + 1))
