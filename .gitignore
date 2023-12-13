@@ -143,3 +143,4 @@ dmypy.json
 /handwritten_tree/circle/datasets/
 /gnn/dataset/
 *.html
+algorithms_focus/RNNs/savefig_example.png
