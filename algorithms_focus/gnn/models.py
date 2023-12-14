@@ -1,4 +1,5 @@
 import torch
+import troch_scatter
 import torch_geometric
 
 
@@ -45,14 +46,21 @@ class GCNGraph(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, gcn_layers=5, gcn_base_layers=3, dropout=0.3):
         super(GCNGraph, self).__init__()
         self.gcn_base_layers = gcn_base_layers
-        self.gnn_node1 = GCNBase(input_dim, hidden_dim, hidden_dim, gcn_layers, dropout, return_embeds=True)
-        self.gnn_node2 = GCNBase(hidden_dim, hidden_dim, hidden_dim, gcn_layers, dropout, return_embeds=True)
+        # self.gnn_node1 = GCNBase(input_dim, hidden_dim, hidden_dim, gcn_layers, dropout, return_embeds=True)
+        # self.gnn_node2 = GCNBase(hidden_dim, hidden_dim, hidden_dim, gcn_layers, dropout, return_embeds=True)
+        self.gnn_node1 = torch_geometric.nn.GCNConv(input_dim, hidden_dim)
+        self.gnn_node2 = torch_geometric.nn.GCNConv(hidden_dim, hidden_dim)
         self.asap = torch_geometric.nn.pool.ASAPooling(256, 0.5, dropout=dropout, negative_slope=0.2, add_self_loops=False)
-        self.linear = torch.nn.Linear(hidden_dim, output_dim)
+        self.linear1 = torch.nn.Linear(2*hidden_dim, hidden_dim)
+        self.linear2 = torch.nn.Linear(hidden_dim, output_dim)
+        self.log_soft = torch.nn.LogSoftmax()
 
     def reset_parameters(self):
         self.gnn_node1.reset_parameters()
-        self.linear.reset_parameters()
+        self.gnn_node2.reset_parameters()
+        self.asap.reset_parameters()
+        self.linear1.reset_parameters()
+        self.linear2.reset_parameters()
 
     def forward(self, data):
         # num_nodes_per_graph = data.batch.bincount()
@@ -64,8 +72,23 @@ class GCNGraph(torch.nn.Module):
                 post_gcn = self.gnn_node1(post_pool[0], post_pool[1], post_pool[2])
             else:
                 post_gcn = self.gnn_node2(post_pool[0], post_pool[1], post_pool[2])
+            post_gcn = torch.relu(post_gcn)
             post_pool = self.asap(post_gcn, post_pool[1])
-            readout = torch_geometric.nn.global_mean_pool(post_pool[0], post_pool[3], data.num_graphs)
-            readouts.append(readout)
+            readouts.append(readout(post_pool[0], post_pool[3]))
+            # readout = torch_geometric.nn.global_mean_pool(post_pool[0], post_pool[3], data.num_graphs)
+            # readouts.append(readout)
+        out = self.linear1(sum(readouts))
+        out = torch.relu(out)
+        out = torch.dropout(out, 0.5, train=self.training)
+        out = self.linear2(out)
+        out = self.log_soft(out)
+        return out
 
-        return self.linear(sum(readouts))
+    def __repr__(self):
+        return self.__class__.__name__
+
+
+def readout(x, batch):
+    x_mean = torch_scatter.scatter_mean(x, batch, dim=0)
+    x_max, _ = torch.scatter.scatter_max(x, batch, dim=0) 
+    return torch.cat((x_mean, x_max), dim=-1)
