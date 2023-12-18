@@ -16,16 +16,16 @@ def read_data(file_path, is_adjacency=False):
     return data
 
 
-def split(expression, target, graph, encode_dim):
+def split(expression, target, graph, encode_dim=0):
     train_list, test_list, valid_list = [], [], []
     num_sample = len(target)
     train_index, val_index = int(num_sample*0.8), int(num_sample*0.9)
-    positional_encoder = torch.rand(31, encode_dim).float()
 
     for i in range(num_sample):
+        x = expression[i]
         if encode_dim > 0:
-            x_yeet = expression[i]
-            x_scalar = torch.unsqueeze(x_yeet, dim=1).float()
+            positional_encoder = torch.rand(31, encode_dim).float()
+            x_scalar = torch.unsqueeze(x, dim=1).float()
             x = torch.cat((x_scalar, positional_encoder), 1)
         y = target[i]
 
