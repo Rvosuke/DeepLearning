@@ -1,11 +1,10 @@
-import torch
-import torch_geometric
 import numpy as np
 import pandas as pd
-import networkx as nx
+import torch
+import torch_geometric
 
 
-def read_data(file_path, is_adjacency=False):
+def read_data(file_path):
     # determine the number of columns
     df = pd.read_csv(file_path)
     num_cols = len(df.columns) - 1
@@ -16,17 +15,27 @@ def read_data(file_path, is_adjacency=False):
     return data
 
 
-def split(expression, target, graph, encode_dim=0):
+def split(expression: torch.Tensor, target: torch.Tensor, graph: torch_geometric.data.Data, encode_dim: int = 0):
+    """
+    Split the data into training, validation and test sets
+
+    :param expression: expression data, with shape (num_sample, num_feature)
+    :param target: diagnosis data, one-hot encoded, with shape (num_sample, num_class)
+    :param graph: graph structure
+    :param encode_dim: dimension of positional encoding
+    :return: training, validation and test sets
+    """
     train_list, test_list, valid_list = [], [], []
     num_sample = len(target)
     train_index, val_index = int(num_sample*0.8), int(num_sample*0.9)
 
     for i in range(num_sample):
         x = expression[i]
+        x = torch.unsqueeze(x, dim=1).float()
         if encode_dim > 0:
-            positional_encoder = torch.rand(31, encode_dim).float()
-            x_scalar = torch.unsqueeze(x, dim=1).float()
-            x = torch.cat((x_scalar, positional_encoder), 1)
+            dimension = len(x)
+            positional_encoder = torch.rand(dimension, encode_dim).float()
+            x = torch.cat((x, positional_encoder), 1)
         y = target[i]
 
         params = {"x": x, "y": y, "edge_index": graph.edge_index, "edge_attr": graph.weight}

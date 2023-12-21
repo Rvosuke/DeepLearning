@@ -1,5 +1,6 @@
 import pandas as pd
 import networkx as nx
+import numpy as np
 
 from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.preprocessing import StandardScaler

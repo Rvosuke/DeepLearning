@@ -144,3 +144,4 @@ dmypy.json
 /gnn/dataset/
 *.html
 algorithms_focus/RNNs/savefig_example.png
+*.0
