@@ -104,6 +104,7 @@ class ASAP(torch.nn.Module):
         self.conv1 = torch_geometric.nn.GraphConv(input_dim, hidden_dim, aggr='mean')
         self.convs = torch.nn.ModuleList()
         self.pools = torch.nn.ModuleList()
+        self.bns = torch.nn.ModuleList()
         self.convs.extend([
             torch_geometric.nn.GraphConv(hidden_dim, hidden_dim, aggr='mean')
             for _ in range(num_layers - 1)
@@ -111,6 +112,10 @@ class ASAP(torch.nn.Module):
         self.pools.extend([
             torch_geometric.nn.ASAPooling(hidden_dim, dropout=dropout)
             for _ in range(num_layers // 2)
+        ])
+        self.bns.extend([
+            torch.nn.BatchNorm1d(hidden_dim)
+            for _ in range(num_layers - 1)
         ])
         self.jump = torch_geometric.nn.JumpingKnowledge(mode='cat')
         self.lin1 = torch.nn.Linear(num_layers * hidden_dim, hidden_dim)
@@ -122,6 +127,8 @@ class ASAP(torch.nn.Module):
             conv.reset_parameters()
         for pool in self.pools:
             pool.reset_parameters()
+        for bn in self.bns:
+            bn.reset_parameters()
         self.lin1.reset_parameters()
         self.lin2.reset_parameters()
 
@@ -132,6 +139,7 @@ class ASAP(torch.nn.Module):
         xs = [torch_geometric.nn.global_mean_pool(x, batch)]
         for i, conv in enumerate(self.convs):
             x = conv(x=x, edge_index=edge_index, edge_weight=edge_weight)
+            x = self.bns[i](x)
             x = torch.relu(x)
             xs += [torch_geometric.nn.global_mean_pool(x, batch)]
             if i % 2 == 0 and i < len(self.convs) - 1:
@@ -143,7 +151,8 @@ class ASAP(torch.nn.Module):
         x = torch.relu(self.lin1(x))
         x = torch.dropout(x, p=0.5, train=self.training)
         x = self.lin2(x)
-        return torch.log_softmax(x, dim=-1)
+        # x = torch.log_softmax(x, dim=-1)
+        return x
 
     def __repr__(self):
         return self.__class__.__name__

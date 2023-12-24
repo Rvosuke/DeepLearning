@@ -145,3 +145,7 @@ dmypy.json
 *.html
 algorithms_focus/RNNs/savefig_example.png
 *.0
+*.pth
+*.pt
+*.png
+*.xlsx
