@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from d2l import torch as d2l
+# from d2l import torch as d2l
 
 
 def mask_softmax(X: torch.Tensor, valid_lens: torch.Tensor) -> torch.Tensor:
