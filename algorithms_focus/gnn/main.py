@@ -9,9 +9,9 @@ import torch_geometric
 from torch_geometric.loader import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from datas import split, read_data
+from preprocess import split, read_data
 from models import GCNGraph, ASAP
-from utils import train, evaluate
+from operator import train, evaluate
 
 warnings.filterwarnings('ignore')
 

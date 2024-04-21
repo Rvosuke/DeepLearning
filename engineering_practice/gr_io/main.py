@@ -58,7 +58,7 @@ def predict(
     # inputs = [list(features.values())]
     print(inputs)
 
-    model = joblib.load('xgb_4.joblib')  # 将'model.joblib'替换为实际的文件名
+    model = joblib.load('C:\\Users\\zeyan\\Contacts\\DeepLearning\\engineering_practice\\gr_io\\xgb_4.joblib')  # 将'model.joblib'替换为实际的文件名
     # 使用加载的模型进行预测
     prediction = model.predict([inputs])
 
@@ -136,5 +136,5 @@ if __name__ == '__main__':
         ],
         title="Glaucoma Prediction App",
         description="Input the patient's features and predict if the patient has glaucoma.",
-        live=True
+        # live=True
     ).launch(share=False)
